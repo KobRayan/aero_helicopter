@@ -34,6 +34,7 @@ testLabels = {'test1 (0.5, cKyp 1)', 'test2 (1, cKyp 1)', 'test3 (1, cKyp 0.75)'
 PO = 7.5;  tp = 1.75;    % PD specs used in the tests (setup_decoupled_pd_simulink.m)
 Wn_vel = 50;             % cut-off of the PIV velocity filter (rad/s)
 zetaVel = 0.8;           % damping of the 2nd-order velocity filter
+addpath(fullfile(fileparts(mfilename('fullpath')), '..', 'reponse_BO_experimentation'))   % identified parameters (.mat)
 identFile  = 'quanser_aero_parameters_identified.mat';
 satV       = 20;
 couplingWindow = 7;      % (s) longest window after the start of a move

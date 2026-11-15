@@ -107,6 +107,7 @@ clear; close all; clc;
 %% ===================== 0. SETTINGS =====================
 % Folder where CONTSID was unzipped (the folder that contains procsrivc.p)
 contsidPath = 'C../CONTSID7_6';   % <-- CHANGE to your CONTSID folder
+addpath(fullfile(fileparts(mfilename('fullpath')), '..', 'CONTSID7_6'))   % CONTSID 7.6 toolbox
 
 % One line per transfer function:
 %   name | file (without .mat) | input row | output row | method

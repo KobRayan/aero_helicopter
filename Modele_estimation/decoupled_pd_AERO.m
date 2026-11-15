@@ -69,6 +69,7 @@ clc
 %% 0) Settings
 addpath('../LQR')
 addpath('../CONTSID7_6')
+addpath(fullfile(fileparts(mfilename('fullpath')), '..', 'reponse_BO_experimentation'))   % identified parameters (.mat)
 identFile = 'quanser_aero_parameters_identified.mat';  % linear (CONTSID) model: used for the DESIGN
 fricFile  = 'aero_friction_parameters.mat';            % friction model: used for the "realistic" plant
 measFile  = '';          % optional measured PD test (9-row log): '' = use the references built below

@@ -35,6 +35,7 @@ clear; close all; clc;
 
 %% ===================== 0. SETTINGS =====================
 fileName  = 'custom_yaw_0to12-12';   % or 'custom_yaw_0to20'
+addpath(fullfile(fileparts(mfilename('fullpath')), '..', 'reponse_BO_experimentation'))   % identified parameters (.mat)
 identFile = 'quanser_aero_parameters_identified.mat';   % linear CONTSID model (optional)
 fricFile  = 'aero_friction_parameters.mat';             % friction model (optional)
 nSmooth   = 25;      % samples of moving average before differentiating the yaw

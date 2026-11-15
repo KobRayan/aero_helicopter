@@ -39,6 +39,7 @@ clc
 %% 0) Reglages
 lqrFile   = 'aero_lqr_rsp_fixed3_sys1';   % LQR "Current", consignes en rampe
 pdFiles   = {'aero_dpd_rsp_test1', 'aero_dpd_rsp_test2', 'aero_dpd_rsp_test3'};
+addpath(fullfile(fileparts(mfilename('fullpath')), '..', 'reponse_BO_experimentation'))   % identified parameters (.mat)
 identFile = 'quanser_aero_parameters_identified.mat';
 fricFile  = 'aero_friction_parameters.mat';
 cKypTests = [1 1 0.75];                    % cKyp utilise dans test1, test2, test3

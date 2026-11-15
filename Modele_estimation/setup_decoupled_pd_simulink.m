@@ -18,6 +18,7 @@
 % Same design as "Decoupled PD" in decoupled_pd_AERO.m (PO = 7.5 %, tp = 1.75 s).
 
 %% 1) Identified model and specifications
+addpath(fullfile(fileparts(mfilename('fullpath')), '..', 'reponse_BO_experimentation'))   % identified parameters (.mat)
 identFile = 'quanser_aero_parameters_identified.mat';
 P  = load(identFile);
 PO = 7.5;                       % overshoot (%)

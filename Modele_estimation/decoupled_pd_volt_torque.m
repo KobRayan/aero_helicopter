@@ -1,4 +1,5 @@
 % Decoupled PD gains for q_aero_2dof_pid_control (torque units)
+addpath(fullfile(fileparts(mfilename('fullpath')), '..', 'reponse_BO_experimentation'))   % identified parameters (.mat)
 P  = load('quanser_aero_parameters_identified.mat');
 PO = 7.5;  tp = 1.75;                                   % Quanser specs
 zeta = -log(PO/100) / sqrt(log(PO/100)^2 + pi^2);
