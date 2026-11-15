@@ -1,35 +1,52 @@
-# MATLAB data files
+# ---------------------------------------------------------------
+# Local-only folders (kept on disk, never pushed)
+# ---------------------------------------------------------------
+# unused, pre-Sept-2026, duplicate and cache files
+_archive/
+# Quanser vendor manuals (copyrighted)
+pdf_files/
+# intermediate figures and Excel exports
+figures/
+
+# ---------------------------------------------------------------
+# MATLAB data files: none, except the identified model parameters
+# ---------------------------------------------------------------
 *.mat
+!quanser_aero_parameters_identified*.mat
+!aero_friction_parameters.mat
 
-# macOS metadata
-.DS_Store
-__MACOSX/
+# Raw data exports
+*.xlsx
+*.zip
 
-# MATLAB autosave / backup files
+# ---------------------------------------------------------------
+# MATLAB / Simulink / QUARC caches and build artifacts
+# ---------------------------------------------------------------
 *.asv
 *.m~
 *.mlx~
 *.slx~
 *.sll~
-
-# MATLAB generated code / cache
-codegen/
+*.autosave
+*.slxc
+*.rt-win64
+*_quarc_win64/
 slprj/
+codegen/
 sccprj/
 *.mex*
 *.p
-
-# MATLAB / Simulink generated reports and build artifacts
+*.prf
+*.tmp
 *.html
 *.log
 *.bak
 
-# Simulink generated files
-*.autosave
-*.slxc
-
-# MATLAB preferences / local configuration
-*.prf
-
-# Temporary MATLAB files
-*.tmp
+# ---------------------------------------------------------------
+# OS / sync clutter
+# ---------------------------------------------------------------
+.DS_Store
+__MACOSX/
+desktop.ini
+Thumbs.db
+.obsidian/

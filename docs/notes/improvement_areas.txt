@@ -1,0 +1,18 @@
+indicateur d'erreur : 
+- erreur quadratique
+- % de saturation
+- effet sur u
+- couplage
+
+
+* faire une rampe à la place d'un step pour la commande pour minimiser le passage brusque
+* limiter la consigne pour rester dans le linéaire
+* pid découplé après?
+* ajouter un gain de pré-contrôle?
+
+
+- observateur Luenberger, Kalman? regler la frequence de coupure de filtre pass haut
+- estimation d'état?
+- trop de bruit sur la vitesse
+- regler le modèle
+

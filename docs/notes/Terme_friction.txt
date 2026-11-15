@@ -1,0 +1,9 @@
+Le modèle linéaire de Quanser (structure conservée, paramètres identifiés avec CONTSID) décrit bien les grands mouvements du tangage (fit ≈ 86 %), mais ses paramètres dépendaient de l’essai : le taux d’amortissement variait de 0,10 à 0,21 et la constante de temps du lacet de 2 à 14 s.
+
+Nous avons montré que cette dépendance vient du frottement sec (de Coulomb) dans les paliers. Ce frottement exerce un couple de valeur constante, toujours opposé au mouvement, et peut bloquer l’axe à l’arrêt. Un modèle linéaire ne peut l’imiter que par un amortissement visqueux équivalent, qui dépend de l’amplitude du mouvement.
+
+Nous avons donc ajouté un terme Fc·sign(vitesse) aux équations de Quanser, avec frottement statique (modèle de Karnopp), et estimé ses paramètres par moindres carrés non linéaires sur les essais complets.
+
+Les valeurs obtenues sont cohérentes avec les mesures : bande de blocage du tangage de ±1,0° (mesurée : +1,4/−1,8°) et tension de décollage du lacet de 5,8 V (zone morte mesurée : 6 à 7 V). Le fit du lacet passe de 74 % à 87 %, et la majeure partie de l’amortissement « linéaire » du tangage s’explique en réalité par le frottement (ζ visqueux de 0,16 à 0,05).
+
+Le modèle linéaire identifié reste celui utilisé pour la synthèse LQR/LQI. Le modèle avec frottement sert à la simulation et justifie l’ajout d’une action intégrale. La limite restante est la poussée des hélices, proportionnelle à V², visible lorsque la tension s’éloigne de 8 V.

@@ -1,0 +1,220 @@
+QUANSER AERO MINI-PROJECT - MODEL IDENTIFICATION: SUMMARY FOR THE NEXT CHAT
+===========================================================================
+Polytech Nancy, M.Eng mini-project, team of 4 sharing one Quanser AERO
+(2-DOF helicopter). Budget 24 h, ~2-3 h left at the time of writing (14/10/2026).
+Next goal: DECOUPLED PD CONTROLLER (to cancel the cross-couplings G12, G21).
+This file summarises the model identification work (07-14/10/2026).
+
+Conventions used everywhere:
+- Inputs  : Vp = pitch motor voltage, Vy = yaw motor voltage (V), saturated +/-20 V
+- Outputs : theta = pitch angle, psi = yaw angle (rad in the models, deg in the logs)
+- State   : x = [theta, psi, theta_dot, psi_dot]
+- Ts = 2 ms (QUARC, HIL Read/Write)
+- Gij = output i / input j (1 = pitch, 2 = yaw):
+    G11 = theta/Vp (direct)   G12 = theta/Vy (cross)
+    G21 = psi/Vp   (cross)    G22 = psi/Vy   (direct)
+  Matrix form: [theta; psi] = [G11 G12; G21 G22] [Vp; Vy]
+  (The Lab Guide figure groups them by INPUT, i.e. transposed: careful.)
+
+
+1. THE MODEL STRUCTURE (KEPT FROM QUANSER, TEACHER'S INSTRUCTION)
+-----------------------------------------------------------------
+2-DOF Lab Guide, eq. 2.1-2.4 (section 2.1.2):
+  Jp*theta'' + Dp*theta' + Ksp*theta = Kpp*Vp + Kpy*Vy
+  Jy*psi''   + Dy*psi'               = Kyp*Vp + Kyy*Vy
+  G11 = Kpp/(Jp s^2 + Dp s + Ksp)   G12 = Kpy/(Jp s^2 + Dp s + Ksp)   (2nd order)
+  G21 = Kyp/(s (Jy s + Dy))         G22 = Kyy/(s (Jy s + Dy))         (1st order + integrator)
+State space (same as quanser_aero_state_space.m):
+  A = [0 0 1 0; 0 0 0 1; -Ksp/Jp 0 -Dp/Jp 0; 0 0 0 -Dy/Jy]
+  B = [0 0; 0 0; Kpp/Jp Kpy/Jp; Kyp/Jy Kyy/Jy]
+  C = [1 0 0 0; 0 1 0 0], D = 0
+  -> A holds the two "bodies" (Ksp, Dp, Dy); B holds the 4 torque gains.
+Jp = 0.02189 and Jy = 0.02199 kg.m^2 are KEPT from the geometry
+(quanser_aero_parameters.m). Only the other 7 parameters are identified.
+Teacher's instructions: keep the Quanser structure (do not rebuild the model),
+use CONTSID; procsrivc only does 1st-order process models (P1D, P1I);
+do not lock the yaw (it does not reflect the real system).
+
+
+2. TESTS RECORDED (open loop, AERO_basics.slx, 12-row data0, Ts = 2 ms)
+------------------------------------------------------------------------
+data0 rows: 1 time | 2-3 motor currents (A) | 4 pitch (deg) | 5 yaw (deg)
+            6-7 propeller speeds (rad/s) | 8-10 gyro | 11 Vp (V) | 12 Vy (V)
+Signals built with Repeating Sequence Stair at Ts = 0.002 s and repelem(...)
+(a 10 s sample time in a 2 ms model gave a multi-rate error).
+  custom_pitch_8V_blocked     yaw locked, Vp 0/-8/0/+8 V, 10 s/level, 80 s
+  custom_yaw_blocked_8V       yaw locked, Vy 0/-8/0/+8 V, 80 s
+  custom_pitch_free_8V        free, Vp 0/-8/0/+8 V, 80 s       -> G11 (and G21 attempt)
+  custom_yaw_free_8V          free, Vy 0/-8/0/+8 V, 80 s       -> G12 and G22
+  custom_pitchsteps_8V_locked yaw locked, Vp staircase 0,3,6,9,12,...,-12,...,0 V (160 s)
+  custom_freeramp_pitch       free, Vp 0 -> 10 V by 1 V every 10 s (110 s)
+  custom_free_2dof1 / 2dof2   free, Vp +/-6 V (period 20 s) + Vy +/-9 V (period 26 s);
+                              use only 0-88 s (at ~91 s both inputs negative within
+                              1 s: pitch dives to -55 deg, hits the base, QUARC stops)
+  step_pitch_10V, step_yaw_10V (older 40 s steps from rest)   -> G21 uses step_pitch_10V
+The pitch could not be locked on our unit (only the yaw lock exists).
+At 8 V the yaw turns slowly (max ~22 deg/s), so locked and free tests gave the
+same G11/G12 (centrifugal effect negligible): final choice = free tests.
+
+
+3. SCRIPTS (MATLAB, self-contained, commented)
+----------------------------------------------
+- plot_all_tests_AERO.m      : one window with tabs (French), one tab per test +
+                               summary tab; unit check (encoder resolution).
+- identify_quanser_AERO.m    : CONTSID identification, Quanser structure:
+    pitch G11, G12 : tfsrivc(data, 2, 0, 'TdMax', TdMax)   (2 poles, 0 zero, + delay)
+    yaw   G21, G22 : procsrivc(data, 'P1I')                (1st order + integrator)
+    mapping: Ksp = Jp*a0, Dp = Jp*a1, Kpp = Jp*b0, Kpy = (static gain G12)*Ksp
+             Dy = Jy/T22, Kyy = K22*Dy, Kyp = K21*Dy
+    (G12 and G21 only give their GAIN: they share the pitch/yaw body with G11/G22)
+    validation on the 2-DOF runs; saves quanser_aero_parameters_identified.mat
+    (same variable names as quanser_aero_parameters.m + A, B, C, D).
+- tune_lqr_model_refined.m   : 4 LQR designs (sys1 Current, sys2 Softer Rx4,
+    sys3 More damping, sys4 Bryson) simulated with the K used on the AERO on the
+    Quanser model AND on the identified model, compared with the measured tests
+    aero_lqr_rsp_fixed2_sysN (steps) / fixed3_sysN (ramps); indicators, tabs,
+    new K computed on the identified model. (Known flaw: "pitch moved by yaw"
+    coupling metric is always 0 because the pitch reference is never constant
+    during a whole yaw move.)
+- fit_friction_AERO.m        : adds Coulomb friction to the Quanser equations,
+    fitted with lsqnonlin on the whole files (not CONTSID: nonlinear model).
+    Saves aero_friction_parameters.mat. (Plots: no 'best' legend, no drawnow;
+    grey figures were a MATLAB graphics problem, solved by restarting.)
+CONTSID 7.6 needs MATLAB R2025a+; addpath to the CONTSID folder (contsidPath).
+
+
+4. FINAL PARAMETERS
+-------------------
+                         Quanser      Linear (CONTSID)     With friction
+  Jp (kg.m^2)            0.02189      0.02189 (kept)       0.02189 (kept)
+  Jy (kg.m^2)            0.02199      0.02199 (kept)       0.02199 (kept)
+  Ksp (N.m/rad)          0.03746      0.03069              0.03151
+  Dp (N.m.s/rad)         0.00711      0.00845              0.00273
+  zeta pitch             0.124        0.163                0.052
+  wn pitch (rad/s)       1.31         1.18                 1.20
+  Kpp (N.m/V)            0.00110      0.000738             0.000744
+  Kpy (N.m/V)            0.00210      ~0.00061 (*)         same as linear
+  Dy (N.m.s/rad)         0.02200      0.01154              0.00372
+  Jy/Dy (s)              1.0          1.91                 5.92
+  Kyy (N.m/V)            0.00220      0.000355             0.000710
+  Kyp (N.m/V)           -0.00270     -0.00065              same as linear
+  Fc pitch (N.m)         -            -                    0.00057 (stuck band +/-1.0 deg)
+  Fc yaw (N.m)           -            -                    0.00415 (breakaway 5.8 V)
+  pitch delay (s)        -            0.05-0.12 (not in the 4-state model)
+(*) Kpy from the free test custom_yaw_free_8V: check the exact value in
+    quanser_aero_parameters_identified.mat (0.00066 with the locked test).
+WHICH SET TO USE:
+  - Controller design (LQR, PD, decoupling): the LINEAR (CONTSID) set. It is
+    the best linear approximation (friction included "on average").
+  - Simulation / understanding: linear set + friction (Dp, Dy, Kyy and Fc of
+    the friction set go TOGETHER; never use them without Fc).
+  - Quanser set: reference only (measured by Quanser with 20 V steps).
+
+
+5. KEY RESULTS
+--------------
+Fits of the identified transfer functions (on their own test):
+  G11 ~86-87 %, G12 ~59-62 % (weakest), G21 96 % (10 V step), G22 82 %
+  G21 on custom_pitch_free_8V: ~10 % (at 8 V the pitch rotor only "kicks" the
+  yaw while spinning up/down, then dry friction stops it).
+Consistency checks of the Quanser structure (same body should give same poles):
+  pitch wn 1.18 (G11) vs 1.41 (G12); yaw T 1.9 s (G22) vs 4.9 s (G21)
+  -> the 4-state structure is a compromise (main limit: G12).
+Open-loop 2-DOF validation (0-88 s): identified pitch ~31 % / yaw ~25 %,
+  Quanser model -60 % / -17 %.
+Closed loop (LQR ramp tests fixed3, K designed on the Quanser model):
+  angle fits ~84-95 % for BOTH models (feedback hides model errors: slow
+  references are tracked by any model); fit on the TRACKING ERROR is better
+  with the identified model for 3 of 4 designs (by 3-10 points).
+  Pitch steady-state error predicted by the identified model matches the
+  measurement within 0.2 deg (3.0/2.7, 5.5/5.5, 2.9/2.8, 3.6/3.5 deg);
+  Quanser model gives ~40 % less. Yaw overshoot overestimated (8 % vs 2 %)
+  because the linear model has no friction.
+  Slowest closed-loop pole: -3.0 rad/s designed (Quanser) vs ~-0.8 on the
+  identified model -> the real loop is slower than designed.
+Why the real AERO is "weaker" than the Quanser model: Quanser measured with
+  20 V steps; thrust ~ V^2, so at our 6-10 V the torque per volt is smaller.
+Cross-coupling: Quanser says Kpy = 1.9 Kpp; identified Kpy ~ 0.8-0.9 Kpp.
+
+
+6. NONLINEARITIES FOUND (what the linear model cannot describe)
+---------------------------------------------------------------
+a) DRY (COULOMB) FRICTION, pitch and yaw. Signs: pitch stays stuck at
+   +1.4 / -1.8 deg after returning to 0 V (staircase); yaw dead zone 6-7 V;
+   yaw stops in ~2 s at constant deceleration when V = 0; identified damping
+   depends on the amplitude (zeta 0.10 at 10 V, 0.16-0.21 at 8 V; yaw time
+   constant 2 s, 4.9 s or 14 s depending on the test). Describing function:
+   equivalent viscous damping = 4*Fc/(pi*w*A), larger at small amplitude.
+   Model: Jp*theta'' + Dp*theta' + Fc_p*sign(theta') + Ksp*theta = Kpp*Vp
+          Jy*psi''   + Dy*psi'   + Fc_y*sign(psi')               = Kyy*Vy
+   + static friction (Karnopp): at rest, the axis stays at rest while the
+   other torques are smaller than Fc. Estimated by nonlinear least squares
+   (simulate, minimise sum of squared errors with lsqnonlin), viscous damping
+   re-estimated together with Fc (otherwise counted twice).
+   Results: pitch fit 85.5 -> 87.5 % (estimation), 1 V ramp validation
+   46 -> 60 %; yaw rate fit 74 -> 87 %, angle 82 -> 85 %.
+   Hand checks: pitch stuck band Fc/Ksp = +/-1.0 deg (measured +1.4/-1.8);
+   yaw breakaway Fc/Kyy = 5.8 V (measured dead zone 6-7 V); yaw stop time
+   ~1.6 s from 18 deg/s (measured 1.7-1.8 s).
+   Pitch Fc only known to its order of magnitude (2.8e-4 to 5.7e-4 N.m).
+   Most of the "high damping" of the linear pitch model is friction
+   (viscous zeta 0.16 -> 0.05).
+b) THRUST ~ V^2 (propeller thrust ~ speed^2, speed ~ V). Pitch staircase:
+   steady pitch ~ 0.140*V|V| deg (V>0), 0.187*V|V| (V<0); pitch ~ (propeller
+   speed)^2 within 5 % from 6 to 12 V. Using u' = V|V|/8 as input raised the
+   staircase validation fit from 70 % to 85 %. Explains why the 10 V yaw step
+   is badly predicted (model 45 deg/s, measured ~105 deg/s).
+c) ASYMMETRY of the pitch motor: negative voltages give ~25-33 % more pitch
+   angle (+8 V -> +9..10 deg, -8 V -> -12..13 deg). Yaw motor almost
+   symmetric (5 %). A sign-dependent gain (Kpp+, Kpp-) would fix the pitch
+   plateaus (offset ~1.5 deg between model and measurement).
+d) CENTRIFUGAL EFFECT: when the yaw spins fast, an extra pitch stiffness
+   ~ Jp*psi_dot^2 pulls the pitch toward horizontal (2-DOF runs: yaw up to
+   80 deg/s, psi_dot^2 ~ 2 > wn^2 = 1.4). Adding psi_dot^2*sin*cos with the
+   theoretical coefficient raised the 2-DOF pitch fit from 50 to 70 %.
+   Negligible at the yaw speeds used in closed loop (ramps, 20-40 deg/s).
+e) REACTION TORQUES (why G12 and G21 are poorly described): the cross paths
+   come from the propellers' reaction torque (drag + spin-up "kick",
+   rotor inertia ~2.6-2.9e-5 kg.m^2). They need a zero that the Quanser
+   structure does not have (G12 2nd order without zero: ~60 % fit).
+f) ACTUATOR DELAY ~0.05-0.12 s (motor + propeller spin-up, propeller time
+   constant ~0.18 s), not in the 4-state model.
+Validity domain of the model: 8 V tests, slow yaw (the controller's range).
+
+
+7. OTHER FACTS USEFUL FOR THE CONTROLLER
+----------------------------------------
+- Encoders: pitch 0.1758 deg/count, yaw 0.0879 deg/count; one count per
+  sample on the yaw = 44 deg/s -> velocities from the encoders are noisy;
+  measured voltage activity of the LQR = 40-90 V/s, proportional to the
+  largest velocity gain (derivative noise). Filter the derivatives.
+- Yaw dead zone ~6-7 V and dry friction: a pure PD leaves the yaw stuck ~1-2
+  deg from the target; pitch keeps a steady-state error (spring + friction):
+  integral action (PID / LQI) is the standard fix.
+- Pitch at equilibrium needs a holding voltage against the spring (Ksp); the
+  yaw needs no holding voltage (no spring).
+- Ramp references (Rate Limiter +/-20 deg/s) reduce saturation (0 %) and
+  coupling (1-3 deg instead of 12-16 deg with steps). Keep them for the PD.
+- Current LQR baseline (Q = diag([200 75 0 0]), R = 0.005*eye(2)),
+  K = [98.21 -103.06 32.26 -29.08 ; 156.35 66.16 45.51 17.11];
+  measured on ramps: pitch e_ss ~2.7-3.0 deg, RMSE 3.9 / 5.3 deg, yaw
+  overshoot ~2 %, 0 % saturation. Use the same metrics (computeMetrics.m)
+  to compare the PD with it.
+- The 2-DOF Lab Guide has a section "Design a de-coupled PD control".
+
+
+8. NOTES FOR THE DECOUPLED PD (starting points, to discuss in the next chat)
+---------------------------------------------------------------------------
+- Static decoupling: the 2 voltages create the 2 torques through the gain
+  matrix  Bt = [Kpp Kpy; Kyp Kyy]  (torque = Bt * [Vp; Vy]).
+  Choose V = inv(Bt) * [tau_p; tau_y]: each PD then commands "its own"
+  torque and, ideally, G12 and G21 disappear. With the linear (CONTSID) set:
+  Bt ~ [0.000738 0.00061; -0.00065 0.000355] (check Kpy in the .mat).
+- Limits: the decoupling is only as good as Kpy and Kyp (the least reliable
+  parameters: G12 fit ~60 %); it is static (the reaction-torque "kicks" during
+  propeller spin-up are not cancelled); V^2 thrust and friction remain.
+- Then one PD per axis on the decoupled model: pitch = Jp s^2 + Dp s + Ksp
+  (2nd order), yaw = s (Jy s + Dy) (integrator): choose wn / zeta of each
+  closed loop, filtered derivative, +/-20 V saturation, ramp references.
+- Compare in simulation with the identified model (optionally + friction),
+  then on the AERO with the same tests and metrics as the LQR.

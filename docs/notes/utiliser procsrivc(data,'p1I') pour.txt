@@ -1,0 +1,6 @@
+utiliser procsrivc(data,'p1I') pour premier ordre integrateur, meilleur que tfsrivc pour un modele ordre 1 + integrateur
+2) ne pas essayer de recosntruire le modele, reparter sur le guide quanser des équations différentielles et des fonctions de transfert qui'ils ont identifié
+
+voir les équations 2.1.2
+
+2dof becomes unsable after 90secinds so security stop and quarc from simulink

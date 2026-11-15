@@ -1,0 +1,61 @@
+Unit check (step_yaw_10V):
+  pitch: smallest change 0.1758 deg (expected 360/2048 = 0.1758)
+  yaw  : smallest change 0.0879 deg (expected 360/4096 = 0.0879)
+
+Order scan: G12 = theta/Vy (pitch, 0-10 s)
+  np  nz  n_par  Td (s)   fit (%)   poles
+  2   0   3       0.000    64.87    [-0.0409+1.39i -0.0409-1.39i]
+  2   1   4       0.200    84.99    [-0.11+1.26i -0.11-1.26i]
+  3   0   4       0.010     9.73    [-1.56 -0.00344+1.33i -0.00344-1.33i]
+  3   1   5       0.000    93.38    [-0.15+1.32i -0.15-1.32i -1.11]
+
+Order scan: G22 = psi/Vy x s (yaw rate, 0-40 s)
+  np  nz  n_par  Td (s)   fit (%)   poles
+  1   0   2       0.140    92.05    -0.0708
+  2   0   3       0.001    92.06    [-6.33 -0.071]
+  2   1   4       0.000    92.55    [-0.169 -0.0906]
+  3   1   5       0.022    92.06    [-4.06+51.7i -4.06-51.7i -0.0709]
+
+===== G12 = theta/Vy, order [np nz] = [2 0] =====
+
+Gp =
+ 
+                            0.04566
+  exp(-1.2e-05*s) * -----------------------
+                    s^2 + 0.08174 s + 1.931
+ 
+Continuous-time transfer function.
+Model Properties
+  Delay: 0.000 s,  static gain: 1.355 deg/V
+
+===== G22 = psi/Vy x s (yaw rate), order [np nz] = [2 1] =====
+
+Grate =
+ 
+                      0.01202 s + 0.002968
+  exp(-3.34e-05*s) * ----------------------
+                     s^2 + 0.26 s + 0.01535
+ 
+Continuous-time transfer function.
+Model Properties
+  Delay: 0.000 s,  static rate gain: 11.076 (deg/s)/V
+  Time constants of the poles: [5.9 11] s
+  Time constant of the zero  : 4.05 s
+
+===== Physical parameters (Jp = 0.0219, Jy = 0.0220 kg.m^2 kept) =====
+                       Quanser     identified
+  wn pitch (rad/s)       1.3083      1.3897
+  zeta pitch             0.1242      0.0294
+  Ksp  (N.m/rad)         0.0375      0.0423
+  Dp   (N.m.s/rad)       0.0071      0.0018
+  Kpy  (N.m/V)          0.00210     0.00100
+  tau yaw (s)             1.000      11.037
+  Dy   (N.m.s/rad)       0.0220      0.0020
+  Kyy  (N.m/V)          0.00220     0.00039
+
+===== Fit (%) on the fit windows =====
+  pitch    : identified   64.9   Quanser -121.1
+  yaw rate : identified   92.5   Quanser   -9.4
+  yaw angle: identified   99.5   Quanser   65.7
+
+Saved: results_ident_step_yaw_10V.mat
