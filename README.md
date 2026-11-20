@@ -7,6 +7,8 @@ A **two-student project** by **Rayan Kobrossly** and **Pierre Baudin**.
 
 📄 **Final report (French):** [`report/Rapport_AERO_V2.pdf`](report/Rapport_AERO_V2.pdf)
 
+📝 **Two-page paper (English):** [*Can we trust a model to fly a helicopter?*](report/Paper_AERO.pdf)
+
 ---
 
 ## Contents
@@ -135,6 +137,7 @@ The full results, numbers and figures are in the [report](report/Rapport_AERO_V2
 ├── README.md
 ├── report/
 │   ├── Rapport_AERO_V2.pdf           final report (French, 31 pages)
+│   ├── Paper_AERO.pdf                short paper (English, 2 pages)
 │   └── scripts/                      scripts cited in annex E of the report (figures and recomputed values)
 ├── LQR/                              loop 1: LQR design, tuning and evaluation
 ├── reponse_BO_experimentation/       open-loop tests, CONTSID identification, friction model
